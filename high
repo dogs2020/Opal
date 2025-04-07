@@ -1,0 +1,50 @@
+// 標準入力からの読み取り例
+module OpalHAL.IO.StandardInput then
+
+    // 1行読み取り
+    function readLine() -> String then
+        nc buffer <- StringBuilder()
+        nc char: Int8 <- 0
+        
+        // システムコールを使用して標準入力から1文字ずつ読み取り
+        while true then
+            // Linux/Unixの場合のread syscall
+            nc result <- SystemInterface.syscall(SYS_read, STDIN_FILENO, &char, 1)
+            
+            if result <= 0 then
+                // エラーまたはEOF
+                break
+            end
+            
+            if char == '\n' then
+                // 改行で終了
+                break
+            end
+            
+            // 文字をバッファに追加
+            buffer.append(char)
+        end
+        
+        return buffer.toString()
+    end
+    
+    // 整数値の読み取り
+    function readInt() -> Int32 then
+        nc line <- readLine()
+        return Int32.parse(line)
+    end
+    
+    // 浮動小数点数の読み取り
+    function readFloat() -> Float64 then
+        nc line <- readLine()
+        return Float64.parse(line)
+    end
+    
+    // ユーザー入力の促進（プロンプト表示）
+    function prompt(message: String) -> String then
+        // プロンプトメッセージを表示
+        StandardOutput.print(message)
+        // 入力を読み取り
+        return readLine()
+    end
+end
