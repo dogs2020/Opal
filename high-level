@@ -1,0 +1,15 @@
+// 使用例
+function first() -> Void then
+    // 標準入力からの読み取り
+    StandardOutput.println("お名前を入力してください：")
+    nc name <- StandardInput.readLine()
+    
+    StandardOutput.println("年齢を入力してください：")
+    nc age <- StandardInput.readInt()
+    
+    StandardOutput.println("こんにちは、" + name + "さん！あなたは" + age.toString() + "歳ですね。")
+    
+    // プロンプトを使用した入力
+    nc favorite <- StandardInput.prompt("好きな色は何ですか？: ")
+    StandardOutput.println(favorite + "は素敵な色ですね！")
+end
