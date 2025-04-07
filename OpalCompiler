@@ -1,0 +1,118 @@
+// opal_runtime/compiler/optimizations/constant_folding.opal
+
+module OpalCompiler.Optimizations.ConstantFolding then
+  import OpalCompiler.IR.MIR;
+  import OpalCompiler.IR.NodeType;
+  
+  // 定数畳み込み最適化を実行する関数
+  function optimize(mir_module: MIR.Module) -> MIR.Module then
+    // モジュール内の各関数を処理
+    for i = 0 to mir_module.functions.length - 1 do
+      let function = mir_module.functions[i];
+      
+      // 関数の本体を最適化
+      function.body = optimizeNode(function.body);
+      
+      // 更新した関数をモジュールに戻す
+      mir_module.functions[i] = function;
+    end
+    
+    return mir_module;
+  end
+  
+  // 個々のノードを最適化する関数（再帰的に処理）
+  function optimizeNode(node: MIR.Node) -> MIR.Node then
+    // 子ノードがない場合は、そのまま返す
+    if node.children == null || node.children.length == 0 then
+      return node;
+    end
+    
+    // 子ノードを再帰的に最適化
+    for i = 0 to node.children.length - 1 do
+      node.children[i] = optimizeNode(node.children[i]);
+    end
+    
+    // 二項演算の場合で、両方のオペランドが定数の場合
+    if node.type == NodeType.BINARY_OP &&
+       node.children.length == 2 &&
+       node.children[0].type == NodeType.CONSTANT &&
+       node.children[1].type == NodeType.CONSTANT then
+      
+      // 定数値を取得
+      let left_value = node.children[0].value;
+      let right_value = node.children[1].value;
+      
+      // 演算子を取得
+      let operator = node.attributes.get("operator");
+      
+      // 演算子に基づいて計算
+      let result_value;
+      
+      if operator == "+" then
+        result_value = left_value + right_value;
+      else if operator == "-" then
+        result_value = left_value - right_value;
+      else if operator == "*" then
+        result_value = left_value * right_value;
+      else if operator == "/" then
+        // 0除算を避ける
+        if right_value == 0 then
+          return node;
+        end
+        result_value = left_value / right_value;
+      else if operator == "%" then
+        // 0除算を避ける
+        if right_value == 0 then
+          return node;
+        end
+        result_value = left_value % right_value;
+      else if operator == "==" then
+        result_value = left_value == right_value;
+      else if operator == "!=" then
+        result_value = left_value != right_value;
+      else if operator == "<" then
+        result_value = left_value < right_value;
+      else if operator == "<=" then
+        result_value = left_value <= right_value;
+      else if operator == ">" then
+        result_value = left_value > right_value;
+      else if operator == ">=" then
+        result_value = left_value >= right_value;
+      else if operator == "&&" then
+        result_value = left_value && right_value;
+      else if operator == "||" then
+        result_value = left_value || right_value;
+      else if operator == "<<" then
+        result_value = left_value << right_value;
+      else if operator == ">>" then
+        result_value = left_value >> right_value;
+      else if operator == "&" then
+        result_value = left_value & right_value;
+      else if operator == "|" then
+        result_value = left_value | right_value;
+      else if operator == "^" then
+        result_value = left_value ^ right_value;
+      else
+        // サポートされていない演算子の場合は、元のノードを返す
+        return node;
+      end
+      
+      // 新しい定数ノードを作成
+      let result_node = new MIR.Node();
+      result_node.type = NodeType.CONSTANT;
+      result_node.value = result_value;
+      result_node.type_info = node.type_info;
+      result_node.source_location = node.source_location;
+      
+      return result_node;
+    end
+    
+    // 最適化できない場合は、元のノードを返す
+    return node;
+  end
+  
+  // 最適化パスをコンパイラに登録する
+  function register(compiler: OpalCompiler) -> void then
+    compiler.addMIROptimizationPass("constant_folding", optimize);
+  end
+end
