@@ -1,6 +1,0 @@
-module HelloWorld then
-    function first() -> Void then
-        OpalSystemCall.(“Hello, World!") -> out;
-// 改行の場合は、=> です.
-    end
-end
